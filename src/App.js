@@ -1,4 +1,6 @@
-import React, { Component,  useState, useEffect, Suspense} from 'react';
+import React, { Component,  useState, useEffect, Suspense, useContext} from 'react';
+import PropTypes from 'prop-types';
+import ReactDOM from 'react-dom';
 import logo from './logo.svg';
 import './App.css';
 
@@ -108,7 +110,7 @@ class Cat extends React.Component {
   render() {
     const mouse = this.props.mouse;
     return (
-      <img src="/cat.jpg" style={{ position: 'absolute', left: mouse.x, top: mouse.y }} />
+      <img src="https://image.flaticon.com/icons/svg/47/47197.svg" style={{ width:'20px', position: 'absolute', left: mouse.x, top: mouse.y }} />
     );
   }
 }
@@ -129,7 +131,7 @@ class Mouse extends React.Component {
 
   render() {
     return (
-      <div style={{ height: '100%' }} onMouseMove={this.handleMouseMove}>
+      <div style={{ height: '100vh' }} onMouseMove={this.handleMouseMove}>
 
         {/*
           Instead of providing a static representation of what <Mouse> renders,
@@ -146,9 +148,11 @@ const B_Tab = (props) => {
   const {data} = props;
   return (
     <table>
-      <tr>
-        <td>{data ? data.value1 : null}</td>
-      </tr>
+      <tbody>
+        <tr>
+          <td>{data ? data.value1 : null}</td>
+        </tr>
+       </tbody>
     </table>
     )
   }
@@ -193,7 +197,10 @@ class A_Form extends React.Component {
 }
 
 
-
+//Props de rendu (render props component)
+//permet d'utiliser une props pour déterminer ce que va rendre un composant.
+// ca permet de partager plus facilement les fonctionnalités
+// ici mouse récupère la position de la souris et le fourni à cat pour qu'il affiche le chat aux coordonnées
 class MouseTracker extends React.Component {
   render() {
     return (
@@ -207,6 +214,7 @@ class MouseTracker extends React.Component {
   }
 }
 
+//exemple higher component (ou composant d ordre supérieur)
 function withLogs(WrappedComponent) {
   // ...and returns another component...
   return class extends React.Component {
@@ -230,7 +238,7 @@ const AsyncComponent = React.lazy(() => import('./AsyncComponent'));
 function MySuspenseComponent(props) {
   return (
     <div>
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div>Loading2...</div>}>
           <AsyncComponent {...props} />
         </Suspense>
      </div>
@@ -240,19 +248,88 @@ function MySuspenseComponent(props) {
 const SuspenseCompWithLogs = withLogs(MySuspenseComponent);
 
 const Calendar = React.lazy(() => {
-  return new Promise(resolve => setTimeout(resolve, 2 * 1000)).then(
+  return new Promise(resolve => setTimeout(resolve, 3 * 1000)).then(
     ()=> import("./AsyncComponent"));
 });
+
+const contentElement = document.getElementById('content');
+
+const PortalComponent = () => {
+  return ReactDOM.createPortal(
+      // Any valid React child: JSX, strings, arrays, etc.
+      <div> Portaled component </div>,
+      // A DOM element
+      contentElement,
+    );
+}
+
+//display multiple component using array as return
+const MultipleComponents = () => {
+  return [
+    <h3> Multiple components : </h3>,
+    <span key='1'> Component One </span>,
+    <span key='2'> Component Two </span>,
+    <span key='3'> Component Three </span>,
+  ]
+}
+
+//context example
+const ColorContext = React.createContext({color:'blue'});
+
+class ColoredButton extends React.Component {
+  // Assign a contextType to read the current theme context.
+  // React will find the closest theme Provider above and use its value.
+  // In this example, the current theme is "dark".
+  static contextType = ColorContext;
+  render() {
+    const divStyle = {
+      backgroundColor: this.context.color
+    };
+    return <button style={divStyle} > Hello </button>;
+  }
+}
+
+const ColoredDiv = props => {
+  const context = useContext(ColorContext)
+  const divStyle = {
+    backgroundColor: context.color,
+    width: '150 px',
+    height: '150px'
+  };
+  return(
+      <div style={divStyle} />
+    );
+}
+
+
+class ContextComponent extends React.Component {
+  render() {
+    return (
+      <div>
+      <ColorContext.Provider value={{color:'yellow'}}>
+        <ColoredButton />
+        <ColoredDiv />
+      </ColorContext.Provider>
+        <ColoredDiv />
+       </div>
+      );
+  }
+
+}
 
 class App extends Component {
   render() {
     return (
       <div className="App">
+              <MultipleComponents/>
               <A_Form/>
               <Clicked4/>
-              <Suspense fallback={<div>Loading...</div>}>
-                    <Calendar />
+              <MouseTracker/>
+              <Suspense fallback={<div>Loading1...</div>}>
+                <Calendar />
               </Suspense>
+              <PortalComponent/>
+              <ContextComponent/>
       </div>
     );
   }
